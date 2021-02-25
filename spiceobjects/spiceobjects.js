@@ -48,7 +48,21 @@ wdi.SpiceObject = {
 
     bytesToURI: function (data) {
         var blob = new Blob([data], {type: "image/jpeg"});
-        return URL.createObjectURL(blob);
+        /**
+         * reason: The performance of 'URL.createObjectURL' is better than 'reader.readAsDataURL' ,
+         * but 'URL.createObjectURL' will download picture in memory and it can not be cleared.
+         * 'reader.readAsDataURL' will generate base64 code and auto GC.If we use 'URL.createObjectURL' here,
+         * When the remote desktop is running long time and image chaning always,it will be out of memory.
+         *
+         */
+        return  new Promise((resolve, reject) => {
+            const reader  = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onload=function(){
+                resolve(reader.result);
+            };
+        })
+        // return URL.createObjectURL(blob);
     },
 
     bytesToStringBE: function (bytes, nbytes) {
